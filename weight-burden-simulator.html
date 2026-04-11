@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Environmental Weight Burden Simulator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    background: #1a1a2e;
+    color: #e8e8e2;
+    padding: 1.5rem;
+    line-height: 1.6;
+  }
+  h1 { font-size: 20px; font-weight: 500; color: #e8e8e2; margin-bottom: 4px; }
+  .subtitle { font-size: 12px; color: #a0a09a; margin-bottom: 1.25rem; line-height: 1.5; max-width: 680px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .panel { background: #252538; border-radius: 12px; padding: 1rem 1.25rem; }
+  .panel-title { font-size: 10px; font-weight: 500; color: #70706a; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
+  .row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .row:last-child { margin-bottom: 0; }
+  .row label { font-size: 12px; color: #a0a09a; min-width: 165px; line-height: 1.3; }
+  .row input[type=range] {
+    flex: 1; -webkit-appearance: none; appearance: none;
+    height: 4px; border-radius: 2px; background: rgba(255,255,255,0.12); outline: none; cursor: pointer;
+  }
+  .row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px;
+    border-radius: 50%; background: #e8e8e2; cursor: pointer;
+  }
+  .row input[type=range]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #e8e8e2; cursor: pointer; border: none;
+  }
+  .row .val { font-size: 11px; font-weight: 500; min-width: 115px; text-align: right; color: #e8e8e2; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-bottom: 12px; }
+  .metric { background: #252538; border-radius: 8px; padding: 0.7rem 0.8rem; }
+  .metric .ml { font-size: 10px; color: #70706a; margin-bottom: 3px; line-height: 1.3; }
+  .metric .mv { font-size: 18px; font-weight: 500; }
+  .tag { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 500; margin-top: 3px; }
+  .tg { background:#EAF3DE; color:#3B6D11; }
+  .tm { background:#FAEEDA; color:#854F0B; }
+  .tb { background:#FCEBEB; color:#A32D2D; }
+  .tv { background:#F5C4B3; color:#993C1D; }
+  .gauge-wrap { margin-bottom: 12px; }
+  .gauge-label { display: flex; justify-content: space-between; font-size: 12px; color: #a0a09a; margin-bottom: 4px; }
+  .gauge-track { height: 14px; border-radius: 7px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .gauge-fill { height: 100%; border-radius: 7px; transition: width 0.4s, background 0.4s; }
+  .status-panel { background: #252538; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 12px; }
+  .status-label { font-size: 10px; color: #70706a; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .status-msg { font-size: 13px; color: #d8d8d2; line-height: 1.6; }
+  .mech-panel { background: #252538; border-radius: 12px; padding: 0.9rem 1.25rem; margin-bottom: 12px; }
+  .mech-title { font-size: 10px; font-weight: 500; color: #70706a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .mech-item { font-size: 12px; color: #a0a09a; padding: 3px 0 3px 10px; border-left: 2px solid rgba(255,255,255,0.12); margin-bottom: 5px; line-height: 1.5; }
+  .info-note { font-size: 11px; color: #a0a09a; line-height: 1.6; }
+  .footnote { font-size: 10px; color: #50504a; line-height: 1.6; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Environmental weight burden simulator</h1>
+<p class="subtitle">Adjust environmental and physiological conditions to see how invisible stressors compound into real barriers to metabolic health. The optimal zone is not about willpower — it is about what your body can do when conditions cooperate.</p>
+
+<div class="grid2">
+  <div class="panel">
+    <div class="panel-title">Indoor environment</div>
+    <div class="row"><label>Indoor CO₂ level</label><input type="range" min="0" max="4" step="1" id="slCO2" value="1"><span class="val" id="lCO2">700 ppm</span></div>
+    <div class="row"><label>Sick building syndrome load</label><input type="range" min="0" max="4" step="1" id="slSBS" value="1"><span class="val" id="lSBS">Mild</span></div>
+    <div class="row"><label>Thermal comfort</label><input type="range" min="0" max="4" step="1" id="slTemp" value="2"><span class="val" id="lTemp">Neutral</span></div>
+    <div class="row"><label>Natural light exposure</label><input type="range" min="0" max="4" step="1" id="slLight" value="2"><span class="val" id="lLight">Moderate (some daylight)</span></div>
+    <div class="row"><label>Humidity (RH)</label><input type="range" min="0" max="4" step="1" id="slHumid" value="2"><span class="val" id="lHumid">40–50%</span></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Physiological &amp; behavioural</div>
+    <div class="row"><label>Sleep quality</label><input type="range" min="0" max="4" step="1" id="slSleep" value="2"><span class="val" id="lSleep">Fair 6–7 hrs</span></div>
+    <div class="row"><label>Chronic stress / cortisol</label><input type="range" min="0" max="4" step="1" id="slStress" value="1"><span class="val" id="lStress">Moderate</span></div>
+    <div class="row"><label>Diet quality (micronutrient)</label><input type="range" min="0" max="4" step="1" id="slDiet" value="2"><span class="val" id="lDiet">Mixed</span></div>
+    <div class="row"><label>Outdoor / movement access</label><input type="range" min="0" max="4" step="1" id="slMove" value="2"><span class="val" id="lMove">3–4 days/wk moderate</span></div>
+    <div class="row"><label>Circadian alignment</label><input type="range" min="0" max="4" step="1" id="slCirc" value="2"><span class="val" id="lCirc">Moderate</span></div>
+  </div>
+</div>
+
+<div class="grid2" style="margin-bottom:12px;">
+  <div class="panel">
+    <div class="panel-title">Substance exposure</div>
+    <div class="row"><label>Alcohol frequency</label><input type="range" min="0" max="4" step="1" id="slAlc" value="0"><span class="val" id="lAlc">None</span></div>
+    <div class="row"><label>Smoking / tobacco</label><input type="range" min="0" max="4" step="1" id="slSmoke" value="0"><span class="val" id="lSmoke">Non-smoker</span></div>
+  </div>
+  <div class="panel" style="display:flex;align-items:center;">
+    <p class="info-note">Alcohol halts fat oxidation during clearance and degrades REM sleep even at moderate intake. Smoking elevates systemic inflammation (IL-6, CRP) and impairs mitochondrial efficiency; nicotine withdrawal commonly produces short-term weight gain as metabolic stimulation is removed.</p>
+  </div>
+</div>
+
+<div class="grid4">
+  <div class="metric"><div class="ml">Exercise tolerance</div><div class="mv" id="vEx">--</div><div id="tEx" class="tag tg">Good</div></div>
+  <div class="metric"><div class="ml">Hunger regulation</div><div class="mv" id="vHung">--</div><div id="tHung" class="tag tg">Balanced</div></div>
+  <div class="metric"><div class="ml">Metabolic efficiency</div><div class="mv" id="vMet">--</div><div id="tMet" class="tag tg">Good</div></div>
+  <div class="metric"><div class="ml">Cortisol / fat storage</div><div class="mv" id="vCort">--</div><div id="tCort" class="tag tg">Low</div></div>
+</div>
+
+<div class="panel" style="margin-bottom:12px;">
+  <div class="panel-title">Total environmental weight burden</div>
+  <div class="gauge-wrap">
+    <div class="gauge-label"><span>Burden score</span><span id="burdenPct">0%</span></div>
+    <div class="gauge-track"><div class="gauge-fill" id="burdenBar" style="width:2%;background:#639922;"></div></div>
+  </div>
+  <canvas id="optCanvas" style="width:100%;height:100px;display:block;border-radius:8px;border:0.5px solid rgba(255,255,255,0.08);"></canvas>
+</div>
+
+<div class="status-panel">
+  <div class="status-label">Assessment</div>
+  <div id="statusMsg" class="status-msg"></div>
+</div>
+
+<div class="mech-panel">
+  <div class="mech-title">Active mechanisms</div>
+  <div id="mechanismText"></div>
+</div>
+
+<p class="footnote">Models relative physiological burden, not absolute weight prediction. Sources: CO₂/cognition (Satish et al. 2012), SBS/exertion (Wargocki et al. 2000), sleep/ghrelin-leptin (Spiegel et al. 2004), cortisol/visceral fat (Björntorp 2001), thermal/BAT thermogenesis (Wijers et al. 2010), light/circadian-metabolic coupling (Scheer et al. 2009), micronutrient/insulin resistance (Guerrero-Romero &amp; Rodríguez-Morán 2011), alcohol/fat oxidation inhibition (Suter et al. 1992), smoking/systemic inflammation (Yanbaeva et al. 2007).</p>
+
+<script>
+(function() {
+
+var CO2_LABELS    = ['420 ppm (outdoor)','700 ppm','1000 ppm','1500 ppm','2500+ ppm'];
+var SBS_LABELS    = ['None','Mild','Moderate','Significant','Severe'];
+var TEMP_LABELS   = ['Too cold','Cool-optimal','Neutral','Warm','Overheated'];
+var LIGHT_LABELS  = ['None (no windows)','Poor (screen only)','Moderate (some daylight)','Good (regular daylight)','Optimal (outdoor daily)'];
+var HUMID_LABELS  = ['< 25% very dry','30–40%','40–50%','50–60%','> 65% damp'];
+var SLEEP_LABELS  = ['< 5 hrs / very poor','5–6 hrs disrupted','Fair 6–7 hrs','Good 7–8 hrs','Excellent 8+ hrs'];
+var STRESS_LABELS = ['Very low','Moderate','High','Very high','Chronic severe'];
+var DIET_LABELS   = ['Ultra-processed only','Mostly processed','Mixed','Mostly whole food','Whole food varied'];
+var MOVE_LABELS   = ['Fully sedentary (chair-bound)','< 30 min walking/wk','1–2 days/wk light activity','3–4 days/wk moderate','Daily active + outdoor'];
+var CIRC_LABELS   = ['Severely disrupted (shift/night)','Poor alignment','Moderate','Good','Optimal natural rhythm'];
+var ALC_LABELS    = ['None','Occasional (1–2/wk)','Moderate (3–5 drinks/wk)','Regular (daily 1–2)','Heavy (daily 3+)'];
+var SMOKE_LABELS  = ['Non-smoker','Ex-smoker (> 1 yr)','Occasional (< 5/day)','Regular (5–15/day)','Heavy (15+/day)'];
+
+var CO2_BURDEN    = [0,10,25,45,70];
+var SBS_BURDEN    = [0,12,28,50,75];
+var TEMP_BURDEN   = [30,5,0,15,35];
+var LIGHT_BURDEN  = [40,28,15,6,0];
+var HUMID_BURDEN  = [35,15,0,10,40];
+var SLEEP_BURDEN  = [80,55,30,10,0];
+var STRESS_BURDEN = [0,20,45,65,85];
+var DIET_BURDEN   = [70,45,25,10,0];
+var MOVE_BURDEN   = [75,55,35,15,0];
+var CIRC_BURDEN   = [65,42,22,8,0];
+var ALC_BURDEN    = [0,12,28,48,72];
+var SMOKE_BURDEN  = [0,8,22,42,65];
+
+var WEIGHTS = [0.07,0.09,0.06,0.07,0.05,0.13,0.12,0.10,0.10,0.09,0.07,0.05];
+
+var history = [];
+var canvas = document.getElementById('optCanvas');
+var ctx = canvas.getContext('2d');
+
+function get(id) { return parseInt(document.getElementById(id).value); }
+
+function colorFor(b) {
+  if (b < 25) return '#639922';
+  if (b < 45) return '#BA7517';
+  if (b < 65) return '#D85A30';
+  return '#A32D2D';
+}
+
+function setTag(valId, tagId, b, labels) {
+  var cls = b < 25 ? 'tg' : b < 45 ? 'tm' : b < 65 ? 'tb' : 'tv';
+  var lbl = b < 25 ? labels[0] : b < 45 ? labels[1] : b < 65 ? labels[2] : labels[3];
+  document.getElementById(valId).textContent = b + '%';
+  document.getElementById(valId).style.color = colorFor(b);
+  var el = document.getElementById(tagId);
+  el.className = 'tag ' + cls;
+  el.textContent = lbl;
+}
+
+function resizeCanvas() {
+  var dpr = window.devicePixelRatio || 1;
+  canvas.width  = canvas.offsetWidth * dpr;
+  canvas.height = canvas.offsetHeight * dpr;
+  ctx.scale(dpr, dpr);
+}
+
+function drawOptimal(burden) {
+  var w = canvas.offsetWidth, h = canvas.offsetHeight;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = 'rgba(20,20,35,0.6)';
+  ctx.fillRect(0, 0, w, h);
+
+  var optY = h * 0.2;
+  ctx.fillStyle = 'rgba(63,160,90,0.14)';
+  ctx.fillRect(0, optY - 10, w, 22);
+  ctx.strokeStyle = 'rgba(80,200,110,0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(0, optY); ctx.lineTo(w, optY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = 'rgba(80,200,110,0.9)';
+  ctx.font = '500 10px Arial,sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('optimal zone', 8, optY - 14);
+
+  var dotY = optY + (burden / 100) * (h - optY - 14);
+  dotY = Math.min(dotY, h - 12);
+
+  if (history.length > 80) history.shift();
+  history.push(dotY);
+
+  if (history.length > 1) {
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(200,200,200,0.2)';
+    ctx.lineWidth = 1;
+    for (var i = 0; i < history.length; i++) {
+      var hx = (i / 79) * w;
+      if (i === 0) ctx.moveTo(hx, history[i]);
+      else ctx.lineTo(hx, history[i]);
+    }
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.arc(w - 14, dotY, 7, 0, Math.PI * 2);
+  ctx.fillStyle = colorFor(burden);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(180,180,170,0.7)';
+  ctx.font = '11px Arial,sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('your position', w - 26, dotY + 4);
+
+  ctx.fillStyle = 'rgba(140,140,130,0.4)';
+  ctx.font = '10px Arial,sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('higher burden = further below optimal', 8, h - 8);
+}
+
+function update() {
+  var co2    = get('slCO2'),   sbs    = get('slSBS'),   temp   = get('slTemp');
+  var light  = get('slLight'), humid  = get('slHumid'), sleep  = get('slSleep');
+  var stress = get('slStress'),diet   = get('slDiet'),  move   = get('slMove');
+  var circ   = get('slCirc'),  alc    = get('slAlc'),   smoke  = get('slSmoke');
+
+  var raw = [
+    CO2_BURDEN[co2], SBS_BURDEN[sbs], TEMP_BURDEN[temp], LIGHT_BURDEN[light],
+    HUMID_BURDEN[humid], SLEEP_BURDEN[sleep], STRESS_BURDEN[stress],
+    DIET_BURDEN[diet], MOVE_BURDEN[move], CIRC_BURDEN[circ],
+    ALC_BURDEN[alc], SMOKE_BURDEN[smoke]
+  ];
+
+  var burden = 0;
+  for (var i = 0; i < raw.length; i++) burden += raw[i] * WEIGHTS[i];
+  burden = Math.min(100, Math.round(burden));
+
+  document.getElementById('burdenPct').textContent = burden + '%';
+  var bar = document.getElementById('burdenBar');
+  bar.style.width = Math.max(2, burden) + '%';
+  bar.style.background = colorFor(burden);
+
+  var exB   = Math.min(100, Math.round(CO2_BURDEN[co2]*0.30 + SBS_BURDEN[sbs]*0.30 + TEMP_BURDEN[temp]*0.15 + SMOKE_BURDEN[smoke]*0.15 + HUMID_BURDEN[humid]*0.10));
+  var hungB = Math.min(100, Math.round(SLEEP_BURDEN[sleep]*0.40 + STRESS_BURDEN[stress]*0.25 + ALC_BURDEN[alc]*0.20 + DIET_BURDEN[diet]*0.15));
+  var metB  = Math.min(100, Math.round(DIET_BURDEN[diet]*0.25 + CIRC_BURDEN[circ]*0.25 + ALC_BURDEN[alc]*0.25 + SMOKE_BURDEN[smoke]*0.15 + LIGHT_BURDEN[light]*0.10));
+  var cortB = Math.min(100, Math.round(STRESS_BURDEN[stress]*0.40 + SLEEP_BURDEN[sleep]*0.25 + CIRC_BURDEN[circ]*0.20 + ALC_BURDEN[alc]*0.15));
+
+  setTag('vEx',   'tEx',   exB,   ['High','Reduced','Low','Very low']);
+  setTag('vHung', 'tHung', hungB, ['Balanced','Disrupted','Elevated hunger','Severe dysregulation']);
+  setTag('vMet',  'tMet',  metB,  ['Efficient','Mildly impaired','Impaired','Severely impaired']);
+  setTag('vCort', 'tCort', cortB, ['Low','Elevated','High','Chronic high']);
+
+  var msg;
+  if (burden < 20) {
+    msg = 'Your environmental and physiological conditions are strongly supportive of metabolic health. Your body has the biological capacity to regulate weight without fighting invisible headwinds.';
+  } else if (burden < 35) {
+    msg = 'Moderate burden. Some stressors are present but manageable. Small targeted improvements — opening windows, improving sleep consistency, reducing alcohol frequency — would meaningfully reduce physiological load.';
+  } else if (burden < 55) {
+    msg = 'Significant burden. Multiple systems are under simultaneous stress. Elevated CO₂ or SBS symptoms are increasing perceived exertion. Sleep disruption is actively dysregulating hunger hormones. Alcohol is periodically halting fat oxidation entirely. This is a physiological load problem, not a willpower deficit.';
+  } else if (burden < 75) {
+    msg = 'High burden. Compounding headwinds are present across nearly every metabolic pathway. Cortisol is elevating visceral fat storage, ghrelin is driving hunger beyond caloric need, and exercise feels disproportionately hard. Addressing the environment directly — ventilation, sleep, alcohol reduction — would have more impact than dietary restriction alone.';
+  } else {
+    msg = 'Severe burden. Under these conditions, conventional weight loss advice is almost entirely counterproductive. The biological cost of the environment is overwhelming the capacity for voluntary behaviour change. Structural environmental intervention is the primary lever — not individual effort.';
+  }
+  document.getElementById('statusMsg').textContent = msg;
+
+  var mechs = [];
+  if (CO2_BURDEN[co2] > 20)      mechs.push('CO₂ at ' + CO2_LABELS[co2] + ' impairs executive function, degrading food choice quality and increasing perceived effort during movement.');
+  if (SBS_BURDEN[sbs] > 15)      mechs.push('SBS load (' + SBS_LABELS[sbs] + '): VOCs, poor ventilation, and inadequate lighting elevate perceived exertion at rest, suppressing voluntary movement.');
+  if (SLEEP_BURDEN[sleep] > 20)  mechs.push('Sleep (' + SLEEP_LABELS[sleep] + ') elevates ghrelin by up to 28% and suppresses leptin — driving 300–500 kcal excess intake per day (Spiegel et al. 2004).');
+  if (STRESS_BURDEN[stress] > 25) mechs.push('Cortisol load (' + STRESS_LABELS[stress] + ') preferentially deposits visceral adipose tissue independent of caloric intake (Björntorp 2001).');
+  if (ALC_BURDEN[alc] > 10)      mechs.push('Alcohol (' + ALC_LABELS[alc] + '): ethanol is metabolised preferentially over all other substrates — fat oxidation is halted entirely during clearance. REM sleep is also degraded even at moderate intake, compounding hunger dysregulation.');
+  if (SMOKE_BURDEN[smoke] > 15)  mechs.push('Smoking (' + SMOKE_LABELS[smoke] + '): chronic systemic inflammation via IL-6 and CRP impairs mitochondrial efficiency. Sensory blunting drives preference toward hyper-palatable foods. Note: cessation commonly produces short-term weight gain as nicotine\'s metabolic stimulation is removed.');
+  if (MOVE_BURDEN[move] > 20)    mechs.push('Movement (' + MOVE_LABELS[move] + '): insufficient activity removes the primary non-pharmacological cortisol regulation pathway and suppresses insulin sensitivity across 24–48 hr windows.');
+  if (LIGHT_BURDEN[light] > 20)  mechs.push('Light exposure (' + LIGHT_LABELS[light] + '): inadequate daylight disrupts circadian cortisol rhythm and reduces brown adipose thermogenesis.');
+  if (CIRC_BURDEN[circ] > 20)    mechs.push('Circadian misalignment (' + CIRC_LABELS[circ] + '): the same meal consumed at night produces ~20% higher glucose and insulin response than consumed at midday (Scheer et al. 2009).');
+  if (DIET_BURDEN[diet] > 20)    mechs.push('Diet quality (' + DIET_LABELS[diet] + '): magnesium and zinc deficits impair insulin sensitivity and amplify fatigue, creating a hunger-fatigue feedback loop.');
+  if (TEMP_BURDEN[temp] > 20)    mechs.push('Thermal environment (' + TEMP_LABELS[temp] + '): suppresses non-exercise thermogenesis in brown adipose tissue — a meaningful metabolic contributor at population scale.');
+  if (HUMID_BURDEN[humid] > 15)  mechs.push('Humidity outside 35–50% RH elevates airway resistance and sleep fragmentation, compounding fatigue and exercise intolerance.');
+  if (mechs.length === 0)         mechs.push('All major mechanisms are currently in the supportive range. Your body is operating with minimal invisible headwinds.');
+
+  document.getElementById('mechanismText').innerHTML = mechs.map(function(m) {
+    return '<div class="mech-item">' + m + '</div>';
+  }).join('');
+
+  drawOptimal(burden);
+}
+
+var labelMaps = [
+  ['slCO2','lCO2',CO2_LABELS],['slSBS','lSBS',SBS_LABELS],['slTemp','lTemp',TEMP_LABELS],
+  ['slLight','lLight',LIGHT_LABELS],['slHumid','lHumid',HUMID_LABELS],
+  ['slSleep','lSleep',SLEEP_LABELS],['slStress','lStress',STRESS_LABELS],
+  ['slDiet','lDiet',DIET_LABELS],['slMove','lMove',MOVE_LABELS],
+  ['slCirc','lCirc',CIRC_LABELS],['slAlc','lAlc',ALC_LABELS],['slSmoke','lSmoke',SMOKE_LABELS]
+];
+
+labelMaps.forEach(function(m) {
+  document.getElementById(m[0]).addEventListener('input', function() {
+    document.getElementById(m[1]).textContent = m[2][parseInt(this.value)];
+    history = [];
+    update();
+  });
+});
+
+window.addEventListener('resize', function() { resizeCanvas(); update(); });
+resizeCanvas();
+update();
+
+})();
+</script>
+</body>
+</html>
